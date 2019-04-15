@@ -139,7 +139,7 @@ module.exports = function (app, options) {
     let locale = this.query[queryField];
     let localeOrigin = 'query';
 
-    if (disableCookieAndHeaderDomin && this.origin && this.origin.indexOf(disableCookieAndHeaderDomin) !== -1) {
+    if (disableCookieAndHeaderDomin && this.host && this.host.indexOf(disableCookieAndHeaderDomin) !== -1) {
       // do nothing
 
     } else {
