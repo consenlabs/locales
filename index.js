@@ -20,6 +20,7 @@ const DEFAULT_OPTIONS = {
   dir: undefined,
   dirs: [ path.join(process.cwd(), 'locales') ],
   functionName: '__',
+  disableCookieAndHeaderDomin: '',
 };
 
 module.exports = function (app, options) {
@@ -33,6 +34,7 @@ module.exports = function (app, options) {
   const localeDir = options.dir;
   const localeDirs = options.dirs;
   const functionName = options.functionName;
+  const disableCookieAndHeaderDomin = options.disableCookieAndHeaderDomin;
   const resources = {};
 
   /**
@@ -137,44 +139,51 @@ module.exports = function (app, options) {
     let locale = this.query[queryField];
     let localeOrigin = 'query';
 
-    // 2. Cookie
-    if (!locale) {
-      locale = cookieLocale;
-      localeOrigin = 'cookie';
-    }
+    if (disableCookieAndHeaderDomin && this.origin && this.origin.indexOf(disableCookieAndHeaderDomin) !== -1) {
+      // do nothing
 
-    // 3. Header
-    if (!locale) {
-      // Accept-Language: zh-CN,zh;q=0.5
-      // Accept-Language: zh-CN
-      let languages = this.acceptsLanguages();
-      if (languages) {
-        if (Array.isArray(languages)) {
-          if (languages[0] === '*') {
-            languages = languages.slice(1);
-          }
-          if (languages.length > 0) {
-            for (let i = 0; i < languages.length; i++) {
-              const lang = formatLocale(languages[i]);
-              if (resources[lang] || localeAlias[lang]) {
-                locale = lang;
-                localeOrigin = 'header';
-                break;
+    } else {
+      // 2. Cookie
+      if (!locale) {
+        locale = cookieLocale;
+        localeOrigin = 'cookie';
+      }
+
+      // 3. Header
+      if (!locale) {
+        // Accept-Language: zh-CN,zh;q=0.5
+        // Accept-Language: zh-CN
+        let languages = this.acceptsLanguages();
+        if (languages) {
+          if (Array.isArray(languages)) {
+            if (languages[0] === '*') {
+              languages = languages.slice(1);
+            }
+            if (languages.length > 0) {
+              for (let i = 0; i < languages.length; i++) {
+                const lang = formatLocale(languages[i]);
+                if (resources[lang] || localeAlias[lang]) {
+                  locale = lang;
+                  localeOrigin = 'header';
+                  break;
+                }
               }
             }
+          } else {
+            locale = languages;
+            localeOrigin = 'header (only one accepted language)';
           }
-        } else {
-          locale = languages;
-          localeOrigin = 'header (only one accepted language)';
         }
       }
-
-      // all missing, set it to defaultLocale
-      if (!locale) {
-        locale = defaultLocale;
-        localeOrigin = 'default';
-      }
     }
+
+    // all missing, set it to defaultLocale
+    if (!locale) {
+      locale = defaultLocale;
+      localeOrigin = 'default';
+    }
+
+    
 
     // cookie alias
     if (locale in localeAlias) {
